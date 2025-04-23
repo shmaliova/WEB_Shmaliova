@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Повна картка викладача</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
+    <style>
+        #map { height: 400px; width: 100%; }
+        #fullCard {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        #fullCard img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+        #info p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Повна картка викладача</h1>
+    
+    <div id="fullCard">
+        <img id="teacherPhoto" src="default-photo.jpg" alt="Фото викладача">
+        <div id="info">
+            <p id="fullName"><b>Ім’я:</b> </p>
+            <p id="gender"><b>Стать:</b> </p>
+            <p id="birthdate"><b>Дата народження:</b> </p>
+            <p id="age"><b>Вік:</b> </p>
+            <p id="email"><b>Email:</b> </p>
+            <p id="phone"><b>Телефон:</b> </p>
+            <p id="country"><b>Країна:</b> </p>
+            <p id="city"><b>Місто:</b> </p>
+            <p id="comment"><b>Коментар:</b> </p>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <script>
+      
+        let map;
+
+        const citiesByCountry = {
+    "Україна": {
+        "Київ": [50.4501, 30.5234],
+        "Харків": [49.9935, 36.2304],
+        "Дніпро": [48.4647, 35.0462],
+        "Одеса": [46.4825, 30.7233],
+        "Львів": [49.8397, 24.0297],
+        "Конотоп": [51.2256, 32.0717],
+        "Запоріжжя": [47.8388, 35.1396],
+        "Миколаїв": [46.9750, 31.9986],
+        "Херсон": [46.6358, 32.6164],
+        "Тернопіль": [49.5535, 25.5948],
+        "Черкаси": [49.4444, 32.0595],
+        "Чернівці": [48.2924, 25.9375],
+        "Хмельницький": [49.4216, 26.9875],
+        "Чернігів": [51.5055, 31.2890]
+    },
+    "Польща": {
+        "Варшава": [52.2298, 21.0122],
+        "Краків": [50.0647, 19.9450],
+        "Лодзь": [51.7592, 19.4560],
+        "Познань": [52.4084, 16.9346],
+        "Гданськ": [54.3520, 18.6466],
+        "Вроцлав": [51.1079, 17.0385],
+        "Щецин": [53.4289, 14.5530],
+        "Бидгощ": [53.1325, 17.9781]
+    },
+    "Німеччина": {
+        "Берлін": [52.5200, 13.4050],
+        "Гамбург": [53.5511, 9.9937],
+        "Мюнхен": [48.1351, 11.5820],
+        "Кельн": [50.9375, 6.9603],
+        "Франкфурт": [50.1109, 8.6821],
+        "Штутгарт": [48.7758, 9.1829],
+        "Дюссельдорф": [51.2217, 6.7762],
+        "Лейпциг": [51.3397, 12.3731],
+        "Дрезден": [51.0504, 13.7373],
+        "Ганновер": [52.3759, 9.7320]
+    }
+
+        };
+
+        // Функція для ініціалізації карти
+        function initializeMap() {
+            map = L.map('map').setView([50.4501, 30.5234], 6); 
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+
+        // Функція для оновлення карти
+        function updateMap(country, city) {
+            const cityCoords = citiesByCountry[country] && citiesByCountry[country][city];
+            if (cityCoords) {
+                map.setView(cityCoords, 12); 
+                L.marker(cityCoords).addTo(map)
+                    .bindPopup(`<b>${city}</b>`)
+                    .openPopup();
+            } else {
+                alert("Координати для цього міста не знайдено!");
+            }
+        }
+
+// дані викладача з localStorage
+const teacherData = JSON.parse(localStorage.getItem('teacherData'));
+
+if (teacherData) {
+    document.getElementById('fullName').innerHTML += teacherData.fullname;
+    document.getElementById('gender').innerHTML += teacherData.gender;
+    document.getElementById('birthdate').innerHTML += teacherData.birthdate;
+    document.getElementById('email').innerHTML += `<a href="mailto:${teacherData.email}">${teacherData.email}</a>`;
+    document.getElementById('phone').innerHTML += `<a href="tel:${teacherData.phone}">${teacherData.phone}</a>`;
+    document.getElementById('country').innerHTML += teacherData.country;
+    document.getElementById('city').innerHTML += teacherData.city;
+    document.getElementById('teacherPhoto').src = teacherData.photo || "default-photo.jpg";
+    document.getElementById('fullCard').style.backgroundColor = teacherData.bgcolor || "#ffffff";
+
+    // Розрахунок віку
+    const birthDate = new Date(teacherData.birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    document.getElementById('age').innerHTML += age;
+    document.getElementById('comment').innerHTML += teacherData.comment;
+
+    initializeMap();
+    updateMap(teacherData.country, teacherData.city);
+} else {
+    console.error("Дані викладача не знайдено в LocalStorage.");
+}
+
+    </script>
+</body>
+</html>
